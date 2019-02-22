@@ -1,19 +1,20 @@
 
 data {
-  int N;
-  vector[N] x;
-  vector[N] y;
+  int N;         // number of data points, length(y)
+  int J;         // number of years
+  vector[N] y;   // response
+  matrix[N,J] X; // matrix of climate covariates
 }
 
 parameters {
   real alpha;
-  real beta;
+  vector[J] beta;
   real<lower=0> sigma;
 }
 
 transformed parameters {
   vector[N] yhat;
-  yhat = alpha + beta * x;
+  yhat = alpha + X * beta;
 }
 
 model {

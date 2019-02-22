@@ -13,38 +13,34 @@ transformed data {
 
 parameters {
   real alpha;
+  vector[K] beta;
   real mu_beta;
   real<lower=0> sigma;
+  real<lower=0> eta; // maximum covariance for betas
   real<lower=0> rho; // degree of temporal autocorrelation for betas
-  vector[K] z;       // unit normal prior for non-centered term
 }
 
 transformed parameters {
   vector[N] yhat;
-  vector[K] beta;
   matrix[K,K] Sigma; // covariance matrix
-  matrix[K,K] L;     // cholesky of covariance matrix
   
   // covariance
-  Sigma = cov_exp_quad(month, 1.0, rho) + diag_matrix(rep_vector(0.001, K));
-  L = cholesky_decompose(Sigma);
-  
-  // non-centered parameterization for beta
-  beta = mu_beta + L * z;
+  Sigma = cov_exp_quad(month, eta, rho) + diag_matrix(rep_vector(0.001, K));
   
   // linear predictor
   yhat = alpha + X * beta;
 }
 
 model {
-  z ~ normal(0, 1);
+  rho ~ normal(0, 5);
+  eta ~ normal(0, 1);
   
-  rho ~ normal(0, 8);
+  beta ~ multi_normal(rep_vector(mu_beta, K), Sigma);
   
   alpha ~ normal(0, 5);
   mu_beta ~ normal(0, 5);
   sigma ~ normal(0, 3);
-
+  
   y ~ normal(yhat, sigma);
 }
 
